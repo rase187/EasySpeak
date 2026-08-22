@@ -2,17 +2,17 @@
 
 A lightweight, privacy-first dictation tool for Windows 10/11. Press a hotkey, speak, and have your words transcribed and inserted at your cursor — powered by local Whisper or cloud APIs, with optional LLM cleanup.
 
-
 ## Features
 
-- **Global hotkey** — Hold to talk, release to transcribe (Caps Lock by default)
+- **Global hotkey** — Hold to talk, release to transcribe (default: **F9**)
 - **Hands-free mode** — Double-tap hotkey to start/stop without holding
-- **Auto-stop** — Hands-free sessions auto-stop after 5 minutes
+- **Auto-stop** — Hands-free sessions auto-stop after 5 minutes (configurable)
 - **Esc to cancel** — Drop recording or kill transcription instantly
 - **Local or cloud transcription** — faster-whisper (offline) or Groq/OpenAI Whisper API
-- **LLM cleanup** — Remove filler words, fix punctuation, proper casing
-- **Clipboard integration** — Text pasted at cursor, also left on clipboard
-- **Floating pill indicator** — Tiny overlay shows recording state
+- **Smart language handling** — Auto-detects Turkish/English, restricts to these languages
+- **LLM cleanup** — Remove filler words, fix punctuation, proper casing (English only)
+- **Clipboard integration** — Text pasted at cursor, also left on clipboard (with auto-restore)
+- **Floating pill indicator** — Tiny Catppuccin-themed overlay shows recording state
 - **System tray** — Enable/disable, switch modes, launch at login
 - **No accounts, no telemetry** — Works fully offline with local model
 
@@ -23,7 +23,7 @@ Download from [python.org](https://www.python.org/downloads/) — check "Add Pyt
 
 ### 2. Clone and install dependencies
 ```bash
-git clone https://github.com/yourusername/EasySpeak.git
+git clone https://github.com/KULLANICI_ADIN/EasySpeak.git
 cd EasySpeak
 pip install -r requirements.txt
 ```
@@ -51,16 +51,16 @@ python main.py
 2. Allow "Python" or "EasySpeak" to monitor input
 
 **Run at startup (optional):**
-- Enable "Launch at Login" from system tray menu
+- Enable "Launch at Login" from system tray menu (enabled by default in config)
 - Or add a shortcut to `shell:startup` folder
 
 ## Usage
 
 | Action | Key |
 |--------|-----|
-| Hold-to-talk | Hold **Caps Lock** (or configured key) |
-| Hands-free start | Double-tap **Caps Lock** |
-| Hands-free stop | Tap **Caps Lock** once |
+| Hold-to-talk | Hold **F9** (or configured key) |
+| Hands-free start | Double-tap **F9** |
+| Hands-free stop | Tap **F9** once |
 | Cancel | Press **Esc** |
 
 The floating pill shows:
@@ -75,40 +75,42 @@ Edit `config.json`:
 ```json
 {
   "hotkey": {
-    "key": "Key.caps_lock",
+    "key": "f9",
     "double_tap_threshold_ms": 300
   },
   "transcription": {
-    "mode": "local",
+    "enabled": true,
+    "mode": "api",
     "local_model": "base",
     "api_provider": "groq"
   },
   "llm": {
     "enabled": true,
     "provider": "groq",
-    "model": "llama3-8b-8192",
-    "prompt": "You are a dictation assistant..."
+    "model": "llama-3.1-8b-instant",
+    "prompt": "You are a dictation assistant. Clean up this transcript: - Remove filler words (um, uh, like, you know) - Add proper punctuation - Fix capitalization for proper nouns - Keep the natural flow of speech - Don't change the meaning or add words"
   },
   "clipboard": {
     "restore_previous": true,
     "restore_delay_seconds": 2.0
   },
   "auto_stop_minutes": 5,
-  "launch_at_login": false
+  "launch_at_login": true
 }
 ```
 
 ### Hotkey Options
 Use any pynput key name:
 - `Key.caps_lock`, `Key.ctrl`, `Key.alt`, `Key.shift`
-- `Key.f1` through `Key.f12`
+- `Key.f1` through `Key.f12` (e.g., `f9`, `f10`)
 - Regular keys: `"a"`, `" "` (space), etc.
+- Modifier combinations: `"alt+caps_lock"`, `"ctrl+shift+space"`
 
 ### Transcription Modes
-- **local** — Uses faster-whisper (downloads model on first run)
-- **api** — Uses Groq or OpenAI Whisper API (requires API key in `.env`)
+- **local** — Uses faster-whisper (downloads model on first run, works offline)
+- **api** — Uses Groq or OpenAI Whisper API (requires API key in `.env`, faster)
 
-### Local Models
+### Local Models (faster-whisper)
 | Model | Size | Speed | Accuracy |
 |-------|------|-------|----------|
 | tiny | 39 MB | Fastest | Lower |
@@ -117,10 +119,18 @@ Use any pynput key name:
 | medium | 769 MB | Slower | Best |
 | large | 1.5 GB | Slowest | Best |
 
-### LLM Providers
-- **Groq** (free, fast) — `GROQ_API_KEY`
-- **OpenAI** — `OPENAI_API_KEY`
-- **Anthropic** — `ANTHROPIC_API_KEY`
+### LLM Providers (for transcript cleanup)
+- **Groq** (free, fast) — `GROQ_API_KEY` — models: `llama-3.1-8b-instant`, `llama-3.3-70b-versatile`, etc.
+- **OpenAI** — `OPENAI_API_KEY` — models: `gpt-4o-mini`, `gpt-4o`, etc.
+- **Anthropic** — `ANTHROPIC_API_KEY` — models: `claude-3-5-haiku-latest`, etc.
+
+> **Note:** LLM cleanup only runs for English transcripts. Turkish (and other non-English) transcripts are used as-is.
+
+## Language Support
+
+- **Turkish (tr)** and **English (en)** — fully supported
+- Other languages: Transcriber falls back to English
+- Language is auto-detected from audio
 
 ## Building Standalone Executable
 
@@ -141,12 +151,13 @@ Output: `dist/EasySpeak.exe`
 ### Hotkey not working
 - Run as Administrator (required for global hotkeys on some systems)
 - Check Input Monitoring permission
-- Try a different hotkey in config.json
+- Try a different hotkey in config.json (e.g., `f10`, `alt+caps_lock`)
 
 ### No microphone input
 - Check Microphone privacy settings
 - Verify correct input device in Windows Sound settings
 - Test with Voice Recorder app
+- Adjust `audio.gain` in config.json (default: 20.0) if input is too quiet
 
 ### Transcription slow/failed
 - Local: First run downloads model (~150 MB for base)
@@ -167,16 +178,16 @@ Output: `dist/EasySpeak.exe`
 ```
 main.py                 # Application entry point
 core/
-  audio_recorder.py     # Microphone recording (sounddevice)
-  hotkey_manager.py     # Global hotkeys (pynput)
-  transcriber.py        # Whisper local/API
-  llm_processor.py      # LLM text cleanup
-  text_inserter.py      # Clipboard + keystrokes
+  audio_recorder.py     # Microphone recording (sounddevice, software gain)
+  hotkey_manager.py     # Global hotkeys (pynput) — hold, double-tap, Esc
+  transcriber.py        # Whisper local/API — tr/en language restriction
+  llm_processor.py      # LLM text cleanup (English only)
+  text_inserter.py      # Clipboard + keystrokes (with auto-restore)
 ui/
-  floating_pill.py      # Overlay indicator (PyQt6)
-  system_tray.py        # Tray icon/menu (pystray)
+  floating_pill.py      # Overlay indicator (PyQt6, Catppuccin Mocha theme)
+  system_tray.py        # Tray icon/menu (pystray, Catppuccin theme)
 utils/
-  config_manager.py     # JSON + .env config
+  config_manager.py     # JSON + .env config management
 ```
 
 ## Privacy
