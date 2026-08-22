@@ -1,7 +1,5 @@
 # EasySpeak - System-wide AI Dictation for Windows
 
-![EasySpeak Demo](assets/logo.gif)
-
 A lightweight, privacy-first dictation tool for Windows 10/11. Press a hotkey, speak, and have your words transcribed and inserted at your cursor — powered by local Whisper or cloud APIs, with optional LLM cleanup.
 
 ## Features
@@ -15,7 +13,7 @@ A lightweight, privacy-first dictation tool for Windows 10/11. Press a hotkey, s
 - **Clipboard integration** — Text pasted at cursor, also left on clipboard (with auto-restore)
 - **Floating pill indicator** — Tiny Catppuccin-themed overlay shows recording state with audio level pulse animation
 - **System tray** — Enable/disable, switch modes, microphone selection, launch at login
-- **No accounts, no telemetry** — Works fully offline with local model
+- **No accounts, no telemetry** — Works fully offline with local model or API
 
 ## Quick Start
 
@@ -232,4 +230,4 @@ MIT License — Free for personal and commercial use.
 
 ---
 
-**Made for power users who want Wispr Flow on Windows — free, local, and hackable.**
+**Made for power users who want Wispr Flow on Windows — free, local.**
