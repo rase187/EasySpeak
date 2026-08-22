@@ -2,7 +2,6 @@
 
 A lightweight, privacy-first dictation tool for Windows 10/11. Press a hotkey, speak, and have your words transcribed and inserted at your cursor — powered by local Whisper or cloud APIs, with optional LLM cleanup.
 
-![EasySpeak Demo](demo.gif)
 
 ## Features
 
