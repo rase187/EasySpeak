@@ -1,7 +1,6 @@
 {
   "hotkey": {
-    "key": "f9",
-    "double_tap_threshold_ms": 300
+    "key": "f9"
   },
   "transcription": {
     "enabled": true,

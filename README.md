@@ -1,19 +1,20 @@
 # EasySpeak - System-wide AI Dictation for Windows
 
+![EasySpeak Demo](assets/logo.gif)
+
 A lightweight, privacy-first dictation tool for Windows 10/11. Press a hotkey, speak, and have your words transcribed and inserted at your cursor — powered by local Whisper or cloud APIs, with optional LLM cleanup.
 
 ## Features
 
 - **Global hotkey** — Hold to talk, release to transcribe (default: **F9**)
-- **Hands-free mode** — Double-tap hotkey to start/stop without holding
-- **Auto-stop** — Hands-free sessions auto-stop after 5 minutes (configurable)
+- **Auto-stop** — Recording auto-stops after 5 minutes (configurable)
 - **Esc to cancel** — Drop recording or kill transcription instantly
 - **Local or cloud transcription** — faster-whisper (offline) or Groq/OpenAI Whisper API
 - **Smart language handling** — Auto-detects Turkish/English, restricts to these languages
 - **LLM cleanup** — Remove filler words, fix punctuation, proper casing (English only)
 - **Clipboard integration** — Text pasted at cursor, also left on clipboard (with auto-restore)
-- **Floating pill indicator** — Tiny Catppuccin-themed overlay shows recording state
-- **System tray** — Enable/disable, switch modes, launch at login
+- **Floating pill indicator** — Tiny Catppuccin-themed overlay shows recording state with audio level pulse animation
+- **System tray** — Enable/disable, switch modes, microphone selection, launch at login
 - **No accounts, no telemetry** — Works fully offline with local model
 
 ## Quick Start
@@ -59,13 +60,10 @@ python main.py
 | Action | Key |
 |--------|-----|
 | Hold-to-talk | Hold **F9** (or configured key) |
-| Hands-free start | Double-tap **F9** |
-| Hands-free stop | Tap **F9** once |
 | Cancel | Press **Esc** |
 
 The floating pill shows:
-- 🔴 **Recording...** — Hold-to-talk active
-- 🎤 **Hands-Free Mode** — Hands-free recording
+- 🔴 **Recording...** — Recording active (with pulse animation matching audio level)
 - ⏳ **Transcribing...** — Processing audio
 
 ## Configuration
@@ -75,8 +73,7 @@ Edit `config.json`:
 ```json
 {
   "hotkey": {
-    "key": "f9",
-    "double_tap_threshold_ms": 300
+    "key": "f9"
   },
   "transcription": {
     "enabled": true,
@@ -94,6 +91,10 @@ Edit `config.json`:
     "restore_previous": true,
     "restore_delay_seconds": 2.0
   },
+  "audio": {
+    "input_device": null,
+    "gain": 20.0
+  },
   "auto_stop_minutes": 5,
   "launch_at_login": true
 }
@@ -105,6 +106,8 @@ Use any pynput key name:
 - `Key.f1` through `Key.f12` (e.g., `f9`, `f10`)
 - Regular keys: `"a"`, `" "` (space), etc.
 - Modifier combinations: `"alt+caps_lock"`, `"ctrl+shift+space"`
+
+The hotkey uses **hold-to-talk**: press and hold to record, release to transcribe.
 
 ### Transcription Modes
 - **local** — Uses faster-whisper (downloads model on first run, works offline)
@@ -139,6 +142,9 @@ pip install pyinstaller
 pyinstaller --noconfirm --onefile --windowed --name EasySpeak \
   --add-data "config.json;." \
   --add-data ".env;." \
+  --add-data "assets/logo_16.png;assets" \
+  --add-data "assets/logo_32.png;assets" \
+  --add-data "assets/logo_64.png;assets" \
   --hidden-import=faster_whisper \
   --hidden-import=ctranslate2 \
   main.py
@@ -179,15 +185,20 @@ Output: `dist/EasySpeak.exe`
 main.py                 # Application entry point
 core/
   audio_recorder.py     # Microphone recording (sounddevice, software gain)
-  hotkey_manager.py     # Global hotkeys (pynput) — hold, double-tap, Esc
+  hotkey_manager.py     # Global hotkeys (pynput) — hold-to-talk, Esc
   transcriber.py        # Whisper local/API — tr/en language restriction
   llm_processor.py      # LLM text cleanup (English only)
   text_inserter.py      # Clipboard + keystrokes (with auto-restore)
 ui/
-  floating_pill.py      # Overlay indicator (PyQt6, Catppuccin Mocha theme)
-  system_tray.py        # Tray icon/menu (pystray, Catppuccin theme)
+  floating_pill.py      # Overlay indicator (PyQt6, Catppuccin Mocha theme, audio pulse)
+  system_tray.py        # Tray icon/menu (pystray, Catppuccin theme, mic selector)
 utils/
   config_manager.py     # JSON + .env config management
+assets/
+  logo.svg              # App logo (animated)
+  logo_*.png            # App icons (16, 24, 32, 48, 64, 128, 256)
+  logo.gif              # Animated logo for README
+  favicon.ico           # Multi-size favicon
 ```
 
 ## Privacy
@@ -217,6 +228,7 @@ MIT License — Free for personal and commercial use.
 - [pystray](https://github.com/moses-palmer/pystray) — System tray
 - [PyQt6](https://www.riverbankcomputing.com/software/pyqt/) — Floating UI
 - [sounddevice](https://python-sounddevice.readthedocs.io/) — Audio recording
+- [Catppuccin](https://github.com/catppuccin/catppuccin) — Color palette
 
 ---
 

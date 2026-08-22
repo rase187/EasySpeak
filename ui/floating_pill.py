@@ -18,7 +18,6 @@ class FloatingPill(QWidget):
     # Pill states
     IDLE = "idle"
     RECORDING = "recording"
-    HANDS_FREE = "hands_free"
     TRANSCRIBING = "transcribing"
 
     # Catppuccin Mocha Color Palette (tokens)
@@ -99,7 +98,6 @@ class FloatingPill(QWidget):
 
         # State accent colors
         self._recording_color = self.RECORDING_RED      # User's custom red
-        self._hands_free_color = self.MAUVE             # Catppuccin Mauve
         self._transcribing_color = self.SAPPHIRE        # Catppuccin Sapphire
 
         # Font - JetBrains Mono
@@ -123,7 +121,7 @@ class FloatingPill(QWidget):
 
     def _update_pulse(self) -> None:
         """Update dot size based on audio level for pulse effect."""
-        if self._state in (self.RECORDING, self.HANDS_FREE):
+        if self._state == self.RECORDING:
             # Interpolate dot size based on audio level
             target_size = self._dot_size_min + (self._dot_size_max - self._dot_size_min) * self._audio_level
             # Smooth transition
@@ -139,7 +137,7 @@ class FloatingPill(QWidget):
         """
         self._audio_level = max(0.0, min(1.0, level))
         # Start/stop pulse timer based on state
-        if self._state in (self.RECORDING, self.HANDS_FREE) and level > 0:
+        if self._state == self.RECORDING and level > 0:
             if not self._level_timer.isActive():
                 self._level_timer.start()
         elif level == 0:
@@ -151,8 +149,6 @@ class FloatingPill(QWidget):
         """Update display text based on state."""
         if self._state == self.RECORDING:
             self._text = "Recording..."
-        elif self._state == self.HANDS_FREE:
-            self._text = "Hands-Free"
         elif self._state == self.TRANSCRIBING:
             self._text = "Transcribing..."
         else:
@@ -176,7 +172,7 @@ class FloatingPill(QWidget):
         Show the pill with given state.
 
         Args:
-            state: One of IDLE, RECORDING, HANDS_FREE, TRANSCRIBING
+            state: One of IDLE, RECORDING, TRANSCRIBING
         """
         self._state = state
         self._update_text()
@@ -234,8 +230,6 @@ class FloatingPill(QWidget):
         # Determine accent color based on state
         if self._state == self.RECORDING:
             accent = self._recording_color
-        elif self._state == self.HANDS_FREE:
-            accent = self._hands_free_color
         elif self._state == self.TRANSCRIBING:
             accent = self._transcribing_color
         else:
@@ -327,9 +321,9 @@ class PillManager:
         self._pill.show_pill(FloatingPill.RECORDING)
 
     def show_hands_free(self) -> None:
-        """Show pill in hands-free state."""
+        """Show pill in recording state (hands-free mode removed)."""
         self._ensure_initialized()
-        self._pill.show_pill(FloatingPill.HANDS_FREE)
+        self._pill.show_pill(FloatingPill.RECORDING)
 
     def show_transcribing(self) -> None:
         """Show pill in transcribing state."""

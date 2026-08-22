@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1e2e"/>
+      <stop offset="100%" stop-color="#181825"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f7768e"/>
+      <stop offset="100%" stop-color="#74c7ec"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square base (app icon shape) -->
+  <rect width="128" height="128" rx="24" fill="url(#bg)" stroke="#45475a" stroke-width="1.5"/>
+
+  <!-- Single signature element: Hold gesture → Voice wave -->
+  <!-- A finger/key pressing down that becomes a sound wave -->
+  <g transform="translate(64, 64)" fill="none" stroke="url(#accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Press line (vertical hold) -->
+    <line x1="0" y1="-32" x2="0" y2="0" opacity="0.6">
+      <animate attributeName="stroke-dasharray" values="0,32; 16,16; 32,0" dur="2s" repeatCount="indefinite"/>
+    </line>
+    <!-- Expanding wave from press point -->
+    <path d="M-28,0 Q0,-20 28,0" opacity="0.8">
+      <animate attributeName="stroke-dasharray" values="0,80; 40,40; 80,0" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;0.2;0" dur="2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M-22,0 Q0,-14 22,0" opacity="0.6">
+      <animate attributeName="stroke-dasharray" values="0,60; 30,30; 60,0" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.6;0.1;0" dur="2s" repeatCount="indefinite" begin="0.15s"/>
+    </path>
+    <path d="M-16,0 Q0,-8 16,0" opacity="0.4">
+      <animate attributeName="stroke-dasharray" values="0,40; 20,20; 40,0" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0;0" dur="2s" repeatCount="indefinite" begin="0.3s"/>
+    </path>
+  </g>
+</svg>

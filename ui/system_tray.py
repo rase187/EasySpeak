@@ -18,7 +18,7 @@ from utils.config_manager import get_config
 class SystemTray:
     """System tray icon and menu for EasySpeak."""
 
-    # Catppuccin Mocha Color Palette
+    # Catppuccin Mocha Color Palette (kept for reference/other uses)
     CRUST = (0x11, 0x11, 0x1b)      # #11111b
     MANTLE = (0x18, 0x18, 0x25)     # #181825
     BASE = (0x1e, 0x1e, 0x2e)       # #1e1e2e
@@ -91,52 +91,74 @@ class SystemTray:
         self._mode = config.get("transcription.mode", "local")
         self._launch_at_login = config.get("launch_at_login", False)
 
-    def _create_icon_image(self, recording: bool = False, processing: bool = False) -> Image.Image:
-        """Create tray icon image - Catppuccin Mocha theme."""
-        # Create a 64x64 image
-        size = 64
+        # Load icon assets
+        self._icons = self._load_icon_assets()
+
+    def _load_icon_assets(self) -> dict:
+        """Load PNG icon assets from assets folder."""
+        assets_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets")
+        icons = {}
+
+        # Load base icons at different sizes
+        for size in [16, 24, 32, 48, 64]:
+            path = os.path.join(assets_dir, f"logo_{size}.png")
+            if os.path.exists(path):
+                icons[size] = Image.open(path).convert("RGBA")
+
+        # Default fallback - create simple icon if assets missing
+        if not icons:
+            icons[64] = self._create_fallback_icon(64)
+
+        return icons
+
+    def _create_fallback_icon(self, size: int) -> Image.Image:
+        """Create a simple fallback icon if assets not found."""
         img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
-
-        # Catppuccin Mocha colors
-        bg_color = self.BASE + (255,)           # #1e1e2e
-        border_color = self.SURFACE1 + (200,)   # #45475a
-        mic_color = self.TEXT + (255,)          # #cdd6f4
-        recording_color = self.RECORDING_RED + (255,)  # #f7768e
-        processing_color = self.SAPPHIRE + (255,)      # #74c7ec
-        disabled_overlay = (100, 100, 100, 128)
-
-        margin = 4
-
-        # Background circle with subtle border
+        margin = max(2, size // 16)
+        bg_color = self.BASE + (255,)
+        border_color = self.SURFACE1 + (200,)
         draw.ellipse(
             [margin, margin, size - margin, size - margin],
             fill=bg_color,
             outline=border_color,
-            width=2
+            width=max(1, size // 32)
         )
+        # Simple wave lines
+        cx, cy = size // 2, size // 2
+        for r in [size // 3, size // 4, size // 6]:
+            draw.arc([cx - r, cy - r, cx + r, cy + r], 0, 180, fill=self.TEXT + (255,), width=max(1, size // 16))
+        return img
 
-        # Microphone icon in Catppuccin Text color
-        mic_x = size // 2
-        mic_y = size // 2 - 4
+    def _get_base_icon(self, size: int = 64) -> Image.Image:
+        """Get base icon at specified size."""
+        if size in self._icons:
+            return self._icons[size].copy()
+        # Find closest larger size and resize down
+        available = sorted(self._icons.keys())
+        for s in available:
+            if s >= size:
+                return self._icons[s].resize((size, size), Image.Resampling.LANCZOS)
+        # Fallback to largest available
+        largest = max(available)
+        return self._icons[largest].resize((size, size), Image.Resampling.LANCZOS)
 
-        # Mic body
-        draw.rectangle(
-            [mic_x - 6, mic_y - 10, mic_x + 6, mic_y + 2],
-            fill=mic_color
-        )
-        # Mic stand
-        draw.rectangle(
-            [mic_x - 10, mic_y + 2, mic_x + 10, mic_y + 4],
-            fill=mic_color
-        )
-        # Mic base (curved)
-        draw.ellipse(
-            [mic_x - 12, mic_y + 4, mic_x + 12, mic_y + 12],
-            fill=mic_color
-        )
+    def _create_icon_image(self, recording: bool = False, processing: bool = False) -> Image.Image:
+        """Create tray icon image using logo asset with state indicators."""
+        size = 64
+        base = self._get_base_icon(size)
 
-        # Recording indicator (single red dot at top-right)
+        # Create a copy to draw state indicators on
+        img = base.copy()
+        draw = ImageDraw.Draw(img)
+
+        recording_color = self.RECORDING_RED + (255,)
+        processing_color = self.SAPPHIRE + (255,)
+        disabled_overlay = (100, 100, 100, 128)
+
+        margin = 4
+
+        # Recording indicator (red dot at top-right)
         if recording:
             draw.ellipse(
                 [size - 18, margin + 2, size - 6, margin + 14],

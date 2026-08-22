@@ -50,8 +50,7 @@ class ConfigManager:
         """Return default configuration."""
         return {
             "hotkey": {
-                "key": "Key.caps_lock",
-                "double_tap_threshold_ms": 300
+                "key": "Key.caps_lock"
             },
             "transcription": {
                 "mode": "local",

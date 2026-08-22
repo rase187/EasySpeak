@@ -352,7 +352,7 @@ class EasySpeakApp:
         print("EasySpeak started")
         print(f"Hotkey: {self.config.get('hotkey.key')}")
         print(f"Mode: {self.config.get('transcription.mode')}")
-        print("Press hotkey to start recording, double-tap for hands-free")
+        print("Press and hold hotkey to record, release to transcribe")
         print("Esc to cancel")
 
         return True
