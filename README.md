@@ -230,4 +230,4 @@ MIT License — Free for personal and commercial use.
 
 ---
 
-**Made for power users who want Wispr Flow on Windows — free, local, and hackable.**
+**Made for power users who want Wispr Flow on Windows — free, local.**
