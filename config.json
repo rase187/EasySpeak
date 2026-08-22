@@ -1,0 +1,24 @@
+{
+  "hotkey": {
+    "key": "f9",
+    "double_tap_threshold_ms": 300
+  },
+  "transcription": {
+    "enabled": true,
+    "mode": "api",
+    "local_model": "base",
+    "api_provider": "groq"
+  },
+  "llm": {
+    "enabled": true,
+    "provider": "groq",
+    "model": "llama-3.1-8b-instant",
+    "prompt": "You are a dictation assistant. Clean up this transcript: - Remove filler words (um, uh, like, you know) - Add proper punctuation - Fix capitalization for proper nouns - Keep the natural flow of speech - Don't change the meaning or add words"
+  },
+  "clipboard": {
+    "restore_previous": true,
+    "restore_delay_seconds": 2.0
+  },
+  "auto_stop_minutes": 5,
+  "launch_at_login": true
+}

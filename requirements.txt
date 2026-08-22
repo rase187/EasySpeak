@@ -1,0 +1,15 @@
+# Core dependencies
+numpy
+sounddevice
+faster-whisper
+pyperclip
+pyautogui
+pyqt6
+pystray
+pynput
+
+# Optional API dependencies
+python-dotenv
+
+# Development
+pytest
