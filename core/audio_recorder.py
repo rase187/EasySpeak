@@ -21,7 +21,8 @@ class AudioRecorder:
         sample_rate: int = 16000,
         channels: int = 1,
         dtype: str = "int16",
-        gain: float = 10.0
+        gain: float = 10.0,
+        device: Optional[int] = None
     ):
         """
         Initialize the audio recorder.
@@ -31,11 +32,13 @@ class AudioRecorder:
             channels: Number of channels (1 for mono)
             dtype: Data type for recording
             gain: Software gain multiplier for low microphone input
+            device: Input device index (None = system default)
         """
         self.sample_rate = sample_rate
         self.channels = channels
         self.dtype = dtype
         self.gain = gain
+        self.device = device
 
         self._recording = False
         self._audio_data: list = []
@@ -60,6 +63,9 @@ class AudioRecorder:
         """
         Start recording audio.
 
+        Args:
+            device: Input device index (overrides instance device if provided)
+
         Returns:
             True if recording started successfully, False otherwise
         """
@@ -70,14 +76,16 @@ class AudioRecorder:
             self._audio_data = []
             self._recording = True
 
+            # Use provided device, fallback to instance device, then system default
+            use_device = device if device is not None else self.device
+
             try:
-                # Use default input device if none specified
                 self._stream = sd.InputStream(
                     samplerate=self.sample_rate,
                     channels=self.channels,
                     dtype=self.dtype,
                     callback=self._audio_callback,
-                    device=device
+                    device=use_device
                 )
                 self._stream.start()
                 return True

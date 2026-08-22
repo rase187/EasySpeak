@@ -9,6 +9,7 @@ import threading
 import time
 import traceback
 from pathlib import Path
+from typing import Optional
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -31,7 +32,10 @@ class EasySpeakApp:
         self.config = get_config()
 
         # Core components
-        self.audio_recorder = AudioRecorder(gain=self.config.get("audio.gain", 20.0))
+        self.audio_recorder = AudioRecorder(
+            gain=self.config.get("audio.gain", 20.0),
+            device=self.config.get("audio.input_device")
+        )
         self.transcriber = create_transcriber()
         self.llm_processor = create_llm_processor()
         self.text_inserter = create_text_inserter()
@@ -43,7 +47,8 @@ class EasySpeakApp:
             on_mode_change=self._on_mode_change,
             on_launch_toggle=self._on_launch_toggle,
             on_settings=self._on_settings,
-            on_quit=self._on_quit
+            on_quit=self._on_quit,
+            on_microphone_change=self._on_microphone_change
         )
 
         # Hotkey manager
@@ -91,6 +96,15 @@ class EasySpeakApp:
     def _on_quit(self) -> None:
         """Handle quit request."""
         self.stop()
+
+    def _on_microphone_change(self, device_index: Optional[int]) -> None:
+        """Handle microphone device change."""
+        print(f"Microphone changed to device index: {device_index}")
+        # Recreate audio recorder with new device
+        self.audio_recorder = AudioRecorder(
+            gain=self.config.get("audio.gain", 20.0),
+            device=device_index
+        )
 
     def _on_hotkey_press(self) -> None:
         """Handle hotkey press (hold-to-talk start)."""
@@ -275,6 +289,7 @@ class EasySpeakApp:
         self._hands_free = False
 
         # Update UI - thread-safe
+        self.pill_manager.set_audio_level(0.0)  # Reset pulse animation
         self.pill_manager.hide_threadsafe()
         self.system_tray.set_processing(False)
         self.system_tray.set_recording(False)
@@ -383,6 +398,12 @@ class EasySpeakApp:
             # Main loop - process Qt events
             while self._running:
                 self.pill_manager.process_events()
+
+                # Update audio level for pulse animation
+                if self._recording:
+                    level = self.audio_recorder.get_audio_level()
+                    self.pill_manager.set_audio_level(level)
+
                 time.sleep(0.016)  # ~60 FPS
         except KeyboardInterrupt:
             print("\nInterrupted")

@@ -81,7 +81,12 @@ class FloatingPill(QWidget):
         self._padding_y = 10
         self._radius = 10
         self._dot_size = 8
+        self._dot_size_min = 6
+        self._dot_size_max = 16
         self._gap = 8  # gap between dot and text
+
+        # Audio level for pulse animation (0.0 to 1.0)
+        self._audio_level = 0.0
 
         # Background - Catppuccin Base with slight transparency
         self._bg_color = QColor(self.BASE.red(), self.BASE.green(), self.BASE.blue(), 240)
@@ -106,10 +111,41 @@ class FloatingPill(QWidget):
         self._hide_timer.setSingleShot(True)
         self._hide_timer.timeout.connect(self._hide_pill_now)
 
+        # Audio level update timer (for pulse animation)
+        self._level_timer = QTimer()
+        self._level_timer.setInterval(50)  # 20 FPS
+        self._level_timer.timeout.connect(self._update_pulse)
+
         # Initialize UI
         self._update_text()
         self._update_size()
         self.hide()
+
+    def _update_pulse(self) -> None:
+        """Update dot size based on audio level for pulse effect."""
+        if self._state in (self.RECORDING, self.HANDS_FREE):
+            # Interpolate dot size based on audio level
+            target_size = self._dot_size_min + (self._dot_size_max - self._dot_size_min) * self._audio_level
+            # Smooth transition
+            self._dot_size = self._dot_size * 0.7 + target_size * 0.3
+            self.update()  # Trigger repaint
+
+    def set_audio_level(self, level: float) -> None:
+        """
+        Set audio level for pulse animation.
+
+        Args:
+            level: Audio level from 0.0 to 1.0
+        """
+        self._audio_level = max(0.0, min(1.0, level))
+        # Start/stop pulse timer based on state
+        if self._state in (self.RECORDING, self.HANDS_FREE) and level > 0:
+            if not self._level_timer.isActive():
+                self._level_timer.start()
+        elif level == 0:
+            self._level_timer.stop()
+            self._dot_size = self._dot_size_min
+            self.update()
 
     def _update_text(self) -> None:
         """Update display text based on state."""
@@ -129,8 +165,9 @@ class FloatingPill(QWidget):
         text_height = metrics.height()
 
         # Width = padding_left + dot + gap + text + padding_right
-        width = self._padding_x + self._dot_size + self._gap + text_width + self._padding_x
-        height = max(text_height, self._dot_size) + self._padding_y * 2
+        dot_size = int(self._dot_size)
+        width = self._padding_x + dot_size + self._gap + text_width + self._padding_x
+        height = max(text_height, dot_size) + self._padding_y * 2
 
         self.setFixedSize(width, height)
 
@@ -212,15 +249,16 @@ class FloatingPill(QWidget):
         painter.drawRoundedRect(rect.adjusted(0, 0, -1, -1), self._radius, self._radius)
 
         # Draw single red dot for recording, colored dot for other states
-        # Center vertically
-        dot_y = (self.height() - self._dot_size) // 2
+        # Center vertically - convert to int for QRect
+        dot_size = int(self._dot_size)
+        dot_y = (self.height() - dot_size) // 2
         dot_x = self._padding_x
-        dot_rect = QRect(dot_x, dot_y, self._dot_size, self._dot_size)
+        dot_rect = QRect(dot_x, dot_y, dot_size, dot_size)
 
         # Draw dot with glow effect for recording
         if self._state == self.RECORDING:
             # Outer glow
-            glow_rect = QRect(dot_x - 2, dot_y - 2, self._dot_size + 4, self._dot_size + 4)
+            glow_rect = QRect(dot_x - 2, dot_y - 2, dot_size + 4, dot_size + 4)
             glow_color = QColor(accent.red(), accent.green(), accent.blue(), 60)
             painter.setBrush(QBrush(glow_color))
             painter.setPen(Qt.PenStyle.NoPen)
@@ -234,7 +272,8 @@ class FloatingPill(QWidget):
         # Draw text - properly vertically centered using font metrics
         painter.setFont(self._font)
         painter.setPen(QPen(self._text_color))
-        text_x = self._padding_x + self._dot_size + self._gap
+        dot_size = int(self._dot_size)
+        text_x = self._padding_x + dot_size + self._gap
         text_width = self.width() - text_x - self._padding_x
 
         # Calculate proper vertical centering using font metrics
@@ -296,6 +335,11 @@ class PillManager:
         """Show pill in transcribing state."""
         self._ensure_initialized()
         self._pill.show_pill(FloatingPill.TRANSCRIBING)
+
+    def set_audio_level(self, level: float) -> None:
+        """Set audio level for pulse animation."""
+        if self._pill:
+            self._pill.set_audio_level(level)
 
     def hide(self, delay: int = 500) -> None:
         """Hide the pill."""

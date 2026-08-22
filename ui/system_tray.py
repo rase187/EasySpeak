@@ -57,7 +57,8 @@ class SystemTray:
         on_mode_change: Optional[Callable] = None,
         on_launch_toggle: Optional[Callable] = None,
         on_settings: Optional[Callable] = None,
-        on_quit: Optional[Callable] = None
+        on_quit: Optional[Callable] = None,
+        on_microphone_change: Optional[Callable] = None
     ):
         """
         Initialize system tray.
@@ -68,12 +69,14 @@ class SystemTray:
             on_launch_toggle: Callback for launch at login toggle
             on_settings: Callback for opening settings
             on_quit: Callback for quit application
+            on_microphone_change: Callback for microphone device change
         """
         self.on_toggle = on_toggle
         self.on_mode_change = on_mode_change
         self.on_launch_toggle = on_launch_toggle
         self.on_settings = on_settings
         self.on_quit = on_quit
+        self.on_microphone_change = on_microphone_change
 
         self._icon: Optional[pystray.Icon] = None
         self._enabled = True
@@ -192,6 +195,58 @@ class SystemTray:
                     self.on_launch_toggle(self._launch_at_login)
             return callback
 
+        def make_mic_callback(device_index):
+            def callback(icon, item):
+                config.set("audio.input_device", device_index)
+                config.save_config()
+                if self.on_microphone_change:
+                    self.on_microphone_change(device_index)
+                # Rebuild menu to update checked state
+                self._icon.menu = self._create_menu()
+            return callback
+
+        # Get available input devices (deduplicate by name)
+        try:
+            import sounddevice as sd
+            devices = sd.query_devices()
+            seen_names = set()
+            input_devices = []
+            for i, d in enumerate(devices):
+                if d['max_input_channels'] > 0:
+                    name = d['name']
+                    # Skip duplicates (same name, different host API)
+                    if name not in seen_names:
+                        seen_names.add(name)
+                        input_devices.append((i, d))
+        except Exception:
+            input_devices = []
+
+        current_device = config.get("audio.input_device")
+
+        # Build microphone submenu
+        mic_menu_items = [
+            pystray.MenuItem(
+                "Default (System)",
+                make_mic_callback(None),
+                checked=lambda item: current_device is None,
+                radio=True
+            ),
+            pystray.Menu.SEPARATOR,
+        ]
+        for idx, dev in input_devices:
+            name = dev['name']
+            # Truncate long names
+            if len(name) > 40:
+                name = name[:37] + "..."
+            mic_menu_items.append(
+                pystray.MenuItem(
+                    name,
+                    make_mic_callback(idx),
+                    checked=lambda item, idx=idx: current_device == idx,
+                    radio=True
+                )
+            )
+
         menu_items = [
             pystray.MenuItem(
                 "Enabled",
@@ -221,6 +276,11 @@ class SystemTray:
                 "Launch at Login",
                 make_launch_callback(None),
                 checked=lambda item: self._launch_at_login
+            ),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem(
+                "Microphone",
+                pystray.Menu(*mic_menu_items)
             ),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(
@@ -314,7 +374,8 @@ def create_system_tray(
     on_mode_change: Optional[Callable] = None,
     on_launch_toggle: Optional[Callable] = None,
     on_settings: Optional[Callable] = None,
-    on_quit: Optional[Callable] = None
+    on_quit: Optional[Callable] = None,
+    on_microphone_change: Optional[Callable] = None
 ) -> SystemTray:
     """Create system tray from configuration."""
     return SystemTray(
@@ -322,5 +383,6 @@ def create_system_tray(
         on_mode_change=on_mode_change,
         on_launch_toggle=on_launch_toggle,
         on_settings=on_settings,
-        on_quit=on_quit
+        on_quit=on_quit,
+        on_microphone_change=on_microphone_change
     )

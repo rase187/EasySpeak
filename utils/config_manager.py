@@ -68,6 +68,10 @@ class ConfigManager:
                 "restore_previous": True,
                 "restore_delay_seconds": 2.0
             },
+            "audio": {
+                "input_device": None,
+                "gain": 20.0
+            },
             "auto_stop_minutes": 5,
             "launch_at_login": False
         }
