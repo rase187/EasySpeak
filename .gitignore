@@ -6,3 +6,5 @@ build/
 *.spec
 *.log
 .DS_Store
+.claude
+logs/
