@@ -22,7 +22,7 @@ Download from [python.org](https://www.python.org/downloads/) — check "Add Pyt
 
 ### 2. Clone and install dependencies
 ```bash
-git clone https://github.com/KULLANICI_ADIN/EasySpeak.git
+git clone https://github.com/rase187/EasySpeak.git
 cd EasySpeak
 pip install -r requirements.txt
 ```
